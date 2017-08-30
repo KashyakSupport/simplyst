@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"simplyst/config"
 
+	"gopkg.in/mgo.v2/bson"
+
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -19,6 +21,8 @@ type user struct {
 var dbSessions = map[string]string{}
 
 var tpl *template.Template
+
+var usernames = []user{}
 
 func init() {
 
@@ -74,7 +78,18 @@ func signup(w http.ResponseWriter, req *http.Request) {
 			}
 		*/
 		// username taken?
+		usernames, err := allUsers()
+		un := req.FormValue("username")
 
+		for _, username := range usernames {
+
+			if username.UserName == un {
+				http.Error(w, "Username already taken", http.StatusForbidden)
+
+				return
+			}
+
+		}
 		// create session
 		sID := uuid.NewV4()
 		c := &http.Cookie{
@@ -122,4 +137,17 @@ func getUser(w http.ResponseWriter, req *http.Request) user {
 	}*/
 
 	return u
+}
+
+func allUsers() ([]user, error) {
+	//	us := []user{}
+	err := config.Userscollection.Find(bson.M{}).All(&usernames)
+
+	if err != nil {
+		fmt.Println("error from allusers function", err)
+		return nil, err
+	}
+	fmt.Println("values from allusers function", usernames)
+
+	return usernames, nil
 }
