@@ -44,13 +44,17 @@ func main() {
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/home", home)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
-
+	http.HandleFunc("/logout", logout)
 	http.ListenAndServe(":8080", nil)
 
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
 	u := getUser(w, req)
+	if alreadyLoggedIn(req) {
+		http.Redirect(w, req, "/home", http.StatusSeeOther)
+		return
+	}
 	tpl.ExecuteTemplate(w, "index.html", u)
 
 }
@@ -139,7 +143,7 @@ func signup(w http.ResponseWriter, req *http.Request) {
 func login(w http.ResponseWriter, req *http.Request) {
 
 	if alreadyLoggedIn(req) {
-		tpl.ExecuteTemplate(w, "/home.html", nil)
+		http.Redirect(w, req, "/home", http.StatusSeeOther)
 		return
 	}
 
@@ -196,7 +200,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 
 func getUser(w http.ResponseWriter, req *http.Request) user {
 	// get cookie
-	c, err := req.Cookie("session")
+	/*c, err := req.Cookie("session")
 	if err != nil {
 		sID := uuid.NewV4()
 		c = &http.Cookie{
@@ -205,7 +209,7 @@ func getUser(w http.ResponseWriter, req *http.Request) user {
 		}
 
 	}
-	http.SetCookie(w, c)
+	http.SetCookie(w, c)*/
 	var u user
 	/*var s session
 	Sessionid := c.Value
@@ -333,4 +337,23 @@ func alreadyLoggedIn(req *http.Request) bool {
 	}
 
 	return false
+}
+
+func logout(w http.ResponseWriter, req *http.Request) {
+	if !alreadyLoggedIn(req) {
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+		return
+	}
+	c, _ := req.Cookie("session")
+	// delete the session
+	//delete(dbSessions, c.Value)
+	// remove the cookie
+	c = &http.Cookie{
+		Name:   "session",
+		Value:  "",
+		MaxAge: -1,
+	}
+	http.SetCookie(w, c)
+
+	http.Redirect(w, req, "/", http.StatusSeeOther)
 }

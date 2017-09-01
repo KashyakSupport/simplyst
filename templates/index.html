@@ -1,21 +1,66 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Document</title>
+    
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simplyst Apps</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+  <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+  <!--Main Stylesheet -->
+  
+ 
+
+
 </head>
+
+
 <body>
+   
 
-{{if .First}}
-USER NAME {{.UserName}}<br>
-FIRST {{.First}}<br>
-LAST {{.Last}}<br>
-{{else}}
-<h2><a href="/signup">sign up</a></h2>
-<h2><a href="/login">log in</a></h2>
-{{end}}
+    
 
-<br>
+
+  <div class="mdl-layout mdl-js-layout">
+      <header class="mdl-layout__header">
+        <div class="mdl-layout-icon"></div>
+        <div class="mdl-layout__header-row">
+          <span class="mdl-layout__title">Simplyst Apps</span>
+          <div class="mdl-layout-spacer"></div>
+          <nav class="mdl-navigation">
+            <a class="mdl-navigation__link" href="/signup">SIGNUP</a>
+            <a class="mdl-navigation__link" href="/login">LOGIN</a>
+            
+          </nav>
+        </div>
+      </header>
+      <div class="mdl-layout__drawer">
+        <span class="mdl-layout__title">Menu</span>
+        
+        <nav class="mdl-navigation">
+          <a class="mdl-navigation__link" href="/home">Home</a>
+          <a class="mdl-navigation__link" href="">About</a>
+          <a class="mdl-navigation__link" href="">Products</a>
+          <a class="mdl-navigation__link" href="">Services</a>
+          <a class="mdl-navigation__link" href="">Contactus</a>
+        </nav>
+      </div>
+    </div>
+
+    
 
 </body>
+
+
+<script>
+    var dialog = document.querySelector('#logindialog');
+    if (! dialog.showModal) {
+      dialogPolyfill.registerDialog(dialog);
+    }
+    dialog.showModal();
+  </script>
+
+
+
 </html>
