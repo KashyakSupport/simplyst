@@ -27,6 +27,7 @@ type user struct {
 var tpl *template.Template
 var usernames = []user{}
 var sessionUsernames = []session{}
+var pwd func(r *http.Request)
 
 //var sessions session
 var userflag bool
@@ -42,6 +43,8 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/signup", signup)
 	http.HandleFunc("/login", login)
+	http.HandleFunc("/forgot", forgot)
+	http.HandleFunc("/FYP", forgetpassword)
 	http.HandleFunc("/home", home)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	http.HandleFunc("/logout", logout)
@@ -356,4 +359,63 @@ func logout(w http.ResponseWriter, req *http.Request) {
 	http.SetCookie(w, c)
 
 	http.Redirect(w, req, "/", http.StatusSeeOther)
+}
+
+func forgetpassword(w http.ResponseWriter, req *http.Request) {
+	un := req.FormValue("pwdusername")
+	req.ParseForm()
+	fmt.Println(req.Form)
+
+	usernames, err := allUsers()
+
+	for _, username := range usernames {
+		if username.UserName == un {
+			fmt.Println("error from loginuser function success", err)
+			http.Redirect(w, req, "/forgot", http.StatusSeeOther)
+		} else {
+
+			fmt.Printf("We can’t find a username that matches what you entered. Verify that your username is an email address ")
+		}
+
+	}
+
+	tpl.ExecuteTemplate(w, "password.html", nil)
+
+}
+
+func forgot(w http.ResponseWriter, req *http.Request) {
+	np := req.FormValue("newpassword")
+	rnp := req.FormValue("reenterpassword")
+
+	if np == rnp {
+		//user := req.Form["pwdusername"]
+		colQuerier := bson.M{"password": np}
+
+		bs1, err := bcrypt.GenerateFromPassword([]byte(np), bcrypt.MinCost)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		change := bson.M{"$set": bson.M{"password": bs1}}
+
+		err = config.Userscollection.Update(colQuerier, change)
+		//	config.Sessionscollection.Find(&user).Update(colQuerier, change)
+		//	err := bcrypt.CompareHashAndPassword(bs1, []byte(np))
+		if err != nil {
+			//	http.Error(w, "Username and/or password do not match", http.StatusForbidden)
+			//fmt.Println("error from loginuser function", err)
+
+		}
+
+		//err := bcrypt.CompareHashAndPassword(user.password, []byte(np))
+
+		//	fmt.Println("error from loginuser function", err)
+
+	} else {
+		fmt.Printf("passwords entered donot  matched")
+
+	}
+
+	tpl.ExecuteTemplate(w, "forgot.html", nil)
 }
