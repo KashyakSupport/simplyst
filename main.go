@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"simplyst/config"
+	"strings"
 
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -202,59 +203,9 @@ func login(w http.ResponseWriter, req *http.Request) {
 }
 
 func getUser(w http.ResponseWriter, req *http.Request) user {
-	// get cookie
-	/*c, err := req.Cookie("session")
-	if err != nil {
-		sID := uuid.NewV4()
-		c = &http.Cookie{
-			Name:  "session",
-			Value: sID.String(),
-		}
 
-	}
-	http.SetCookie(w, c)*/
 	var u user
-	/*var s session
-	Sessionid := c.Value
-	//var dbSessions = map[string]string{}
-	//get session id
-	// get username based on session id
-	// get user details based on user name
-	fmt.Println(" c.value Sessionscollection error from get user function", c.Value)
-	//errr := config.Sessionscollection.Find(bson.M{}).All(&sessions)
-	errr := config.Sessionscollection.Find(bson.M{"Sessionid": Sessionid}).One(&s)
-	if errr != nil {
-		fmt.Println(" errr Sessionscollection error from get user function", errr)
-	}
-	//un := dbSessions[c.Value]
 
-		for _, dbsession := range sessions {
-			if dbsession.Sessionid == c.Value {
-				s = dbsession
-				//return s
-			}
-		}
-	errrr := config.Userscollection.Find(bson.M{"username": s.UserName}).One(&u)
-	if errrr != nil {
-		fmt.Println("errrr Userscollection error from get user function", errrr)
-	}
-	fmt.Println("getting session id from get user", un)
-	fmt.Println("getting session id from get user", c)
-	fmt.Println("getting session id from get user", c.Value)
-	usernames, err := allUsers()
-
-	if err != nil {
-		fmt.Println("error from login function", err)
-	}
-
-	for _, username := range usernames {
-		if username.UserName == un {
-			u = username
-			return u
-		}
-	}
-	//_, ok := dbUsers[un]
-	*/
 	return u
 }
 
@@ -362,19 +313,29 @@ func logout(w http.ResponseWriter, req *http.Request) {
 }
 
 func forgetpassword(w http.ResponseWriter, req *http.Request) {
+
+	//we have to give an username
+
+	// Get the username based on username
+
+	// Then update password for that username
+
+	//Current username password change
+
 	un := req.FormValue("pwdusername")
-	req.ParseForm()
-	fmt.Println(req.Form)
+	//req.ParseForm()
+	fmt.Println("my user name", un)
 
 	usernames, err := allUsers()
+	if err != nil {
+		fmt.Println("error from login function", err)
+	}
 
 	for _, username := range usernames {
 		if username.UserName == un {
-			fmt.Println("error from loginuser function success", err)
-			http.Redirect(w, req, "/forgot", http.StatusSeeOther)
-		} else {
 
-			fmt.Printf("We can’t find a username that matches what you entered. Verify that your username is an email address ")
+			http.Redirect(w, req, "/forgot", http.StatusSeeOther)
+
 		}
 
 	}
@@ -386,36 +347,44 @@ func forgetpassword(w http.ResponseWriter, req *http.Request) {
 func forgot(w http.ResponseWriter, req *http.Request) {
 	np := req.FormValue("newpassword")
 	rnp := req.FormValue("reenterpassword")
+	un := req.Form["pwdusername"]
+	if req.Method == http.MethodPost {
+		var uname string
+		stringArray := un
+		uname = strings.Join(stringArray, " ")
+		//fmt.Println(uname)
 
-	if np == rnp {
-		//user := req.Form["pwdusername"]
-		colQuerier := bson.M{"password": np}
+		if np == rnp {
 
-		bs1, err := bcrypt.GenerateFromPassword([]byte(np), bcrypt.MinCost)
+			result := user{}
+			errr := config.Userscollection.Find(bson.M{"username": uname}).One(&result)
+			if errr != nil {
+				fmt.Println("errr from one collection", errr)
+			}
+			fmt.Println("username", result)
 
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+			pwd := result.Password
+			fmt.Println("PASSWORD", pwd)
+
+			bs, err := bcrypt.GenerateFromPassword([]byte(req.FormValue("newpassword")), bcrypt.MinCost)
+			colQuerier := bson.M{"username": uname}
+			fmt.Println("colQueriercolQuerier", colQuerier)
+			change := bson.M{"$set": bson.M{"pwd": bs}}
+			fmt.Println("changechange value", change)
+			err = config.Userscollection.Update(colQuerier, change)
+			fmt.Println("decrypted value", err)
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+
+		} else {
+
+			fmt.Println("passwords are not matched")
 		}
-		change := bson.M{"$set": bson.M{"password": bs1}}
 
-		err = config.Userscollection.Update(colQuerier, change)
-		//	config.Sessionscollection.Find(&user).Update(colQuerier, change)
-		//	err := bcrypt.CompareHashAndPassword(bs1, []byte(np))
-		if err != nil {
-			//	http.Error(w, "Username and/or password do not match", http.StatusForbidden)
-			//fmt.Println("error from loginuser function", err)
-
-		}
-
-		//err := bcrypt.CompareHashAndPassword(user.password, []byte(np))
-
-		//	fmt.Println("error from loginuser function", err)
-
-	} else {
-		fmt.Printf("passwords entered donot  matched")
+		tpl.ExecuteTemplate(w, "forgot.html", nil)
 
 	}
 
-	tpl.ExecuteTemplate(w, "forgot.html", nil)
 }
